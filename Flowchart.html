@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Amazon Sourcing Flow Chart</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 20px;
+            padding: 20px;
+            background-color: white;
+        }
+        #flowchart {
+            width: 100%;
+            margin: 20px 0;
+            padding: 20px;
+            background-color: white;
+        }
+        .download-btn {
+            padding: 12px 24px;
+            background-color: #FF9900;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <button class="download-btn" onclick="downloadPDF()">Download as PDF</button>
+    <div id="flowchart">
+        <pre class="mermaid">
+%%{init: {
+    'theme': 'base',
+    'themeVariables': {
+        'primaryColor': '#232F3E',
+        'primaryTextColor': '#FFFFFF',
+        'primaryBorderColor': '#FF9900',
+        'lineColor': '#FF9900',
+        'secondaryColor': '#232F3E',
+        'tertiaryColor': '#232F3E'
+    }
+}}%%
+flowchart TD
+    A([Start]) --> B[Vendor Identification]
+    B --> C[RFQ Closure]
+    
+    subgraph RFQ[RFQ Process]
+        C1[MOQ] 
+        C2[FOQ]
+        C3[NLC]
+        C3 --> C3A[Product Cost]
+        C3 --> C3B[Packaging Cost]
+        C3 --> C3C[Branding Cost]
+        C3 --> C3D[Transportation Cost]
+    end
+    
+    C --> RFQ
+    RFQ --> D[PPT - Pre Production Test]
+    
+    D --> E{Already Tested Product?}
+    E -->|Yes| F[Parallel Activities]
+    E -->|No| G[Send Samples for Testing]
+    
+    G --> H{Test Results}
+    H -->|Fail| G
+    H -->|Pass| F
+    
+    subgraph Parallel[Parallel Processes]
+        F1[DP Creation]
+        F2[Branding]
+        F3[Photoshoot]
+    end
+    
+    F --> Parallel
+    
+    F1 --> I[Upload to Vendor Central]
+    I --> J{Approval from Teams}
+    J -->|Reject| K[Modify Changes]
+    K --> I
+    J -->|Approve| L[Release Draft 1]
+    
+    F3 --> M[Submit Photos]
+    M --> N{Photo Approval}
+    N -->|Reject| O[Retake Photos]
+    O --> M
+    N -->|Approve| P[Upload to Vendor Central]
+    
+    L & P --> Q[Packaging Artwork]
+    Q --> R{Artwork Approval}
+    R -->|Reject| S[Modify Artwork]
+    S --> Q
+    R -->|Approve| T[Issue PO to Seller]
+    
+    T --> U[Seller Releases PO to Vendor]
+    U --> V[Production Starts]
+    V --> W[Pre-shipment Inspection]
+    W --> X{Inspection Result}
+    X -->|Fail| V
+    X -->|Pass| WTS[Walk The Store - WTS]
+    
+    subgraph WTS_Process[Walk The Store Process]
+        WTS1[Check Product Specifications]
+        WTS2[Verify Packaging]
+        WTS3[Quality Control]
+        WTS4[Documentation Review]
+        WTS5[Compliance Verification]
+    end
+    
+    WTS --> WTS_Process
+    WTS_Process --> WTS_Decision{WTS Review}
+    WTS_Decision -->|Fail| V
+    WTS_Decision -->|Pass| Y[Ship to Warehouse]
+    Y --> Z[Product Goes Live]
+    Z --> End([End])
+
+    classDef default fill:#232F3E,stroke:#FF9900,stroke-width:2px,color:#FFFFFF;
+    classDef decision fill:#232F3E,stroke:#FF9900,stroke-width:2px,color:#FFFFFF;
+    class A,B,C,D,F,G,I,K,L,M,O,P,Q,S,T,U,V,W,Y,Z default;
+    class E,H,J,N,R,X,WTS_Decision decision;
+        </pre>
+    </div>
+
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            flowchart: {
+                useMaxWidth: true,
+                htmlLabels: true,
+                curve: 'basis'
+            }
+        });
+
+        function downloadPDF() {
+            const element = document.getElementById('flowchart');
+            const opt = {
+                margin: 10,
+                filename: 'amazon_sourcing_flowchart.pdf',
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { 
+                    scale: 2,
+                    backgroundColor: '#FFFFFF',
+                    logging: true
+                },
+                jsPDF: { 
+                    unit: 'mm', 
+                    format: 'a3', 
+                    orientation: 'landscape'
+                }
+            };
+
+            // Add a small delay to ensure the flowchart is fully rendered
+            setTimeout(() => {
+                html2pdf().set(opt).from(element).save();
+            }, 1000);
+        }
+    </script>
+</body>
+</html>
