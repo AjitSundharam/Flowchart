@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dynamic Amazon Sourcing Flow Chart</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+    <style>
+        body {
+            font-family: 'Open Sans', sans-serif;
+            margin: 20px;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 95%;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+
+        .input-section {
+            margin-bottom: 20px;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        .upload-btn {
+            padding: 12px 24px;
+            background-color: #FF9900;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+
+        #flowchart {
+            margin-top: 20px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="input-section">
+            <input type="file" id="fileInput" accept=".csv">
+            <button class="upload-btn" onclick="document.getElementById('fileInput').click()">
+                Upload Process Excel/CSV
+            </button>
+            <button class="upload-btn" onclick="generatePDF()">Download as PDF</button>
+        </div>
+        <div id="flowchart"></div>
+    </div>
+
+    <script>
+        let flowchartData = [];
+
+        document.getElementById('fileInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                Papa.parse(file, {
+                    header: true,
+                    complete: function(results) {
+                        flowchartData = results.data;
+                        generateFlowchart();
+                    }
+                });
+            }
+        });
+
+        function generateFlowchart() {
+            let mermaidCode = `%%{init: {
+                'theme': 'base',
+                'themeVariables': {
+                    'primaryColor': '#232F3E',
+                    'primaryTextColor': '#FFFFFF',
+                    'primaryBorderColor': '#FF9900',
+                    'lineColor': '#FF9900',
+                    'secondaryColor': '#232F3E'
+                }
+            }}%%\nflowchart TD\n`;
+
+            // Track subgraphs
+            let subgraphs = new Set();
+            let subgraphContent = {};
+
+            // Process nodes and connections
+            flowchartData.forEach(row => {
+                if (row.subgraph) {
+                    subgraphs.add(row.subgraph);
+                    if (!subgraphContent[row.subgraph]) {
+                        subgraphContent[row.subgraph] = [];
+                    }
+                    subgraphContent[row.subgraph].push(row);
+                } else {
+                    // Main flow connections
+                    if (row.source && row.target) {
+                        let connectionText = row.text ? `|${row.text}|` : '';
+                        mermaidCode += `    ${row.source} --> ${connectionText} ${row.target}\n`;
+                    }
+                }
+            });
+
+            // Add subgraphs
+            subgraphs.forEach(subgraph => {
+                mermaidCode += `    subgraph ${subgraph}\n`;
+                subgraphContent[subgraph].forEach(row => {
+                    if (row.source && row.target) {
+                        let connectionText = row.text ? `|${row.text}|` : '';
+                        mermaidCode += `        ${row.source} --> ${connectionText} ${row.target}\n`;
+                    }
+                });
+                mermaidCode += '    end\n';
+            });
+
+            // Add styling
+            mermaidCode += `
+    classDef default fill:#232F3E,stroke:#FF9900,stroke-width:2px,color:#FFFFFF
+    classDef decision fill:#232F3E,stroke:#FF9900,stroke-width:2px,color:#FFFFFF
+`;
+
+            // Render flowchart
+            const flowchartDiv = document.getElementById('flowchart');
+            flowchartDiv.innerHTML = `<pre class="mermaid">${mermaidCode}</pre>`;
+            mermaid.init();
+        }
+    </script>
+</body>
+</html>
